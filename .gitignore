@@ -1,0 +1,8 @@
+# Videos pesados originales (superan el limite de 100MB de GitHub)
+*.mp4
+
+# Archivos de sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

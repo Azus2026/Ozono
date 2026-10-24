@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HS-Y01 Industrial Ozone & Negative Ion System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #07090c;
+      --teal-primary: #1de9b6;
+      --teal-glow: rgba(29, 233, 182, 0.4);
+      --card-bg: rgba(13, 17, 23, 0.75);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+      selection-background-color: var(--teal-primary);
+    }
+
+    /* PRELOADER */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-dark);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .loader-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(29, 233, 182, 0.15);
+      border-top-color: var(--teal-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loader-text {
+      font-family: 'Space Grotesk', monospace;
+      color: var(--teal-primary);
+      font-size: 0.95rem;
+      letter-spacing: 2px;
+    }
+
+    /* NAVBAR */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 6vw;
+      background: linear-gradient(180deg, rgba(7, 9, 12, 0.85) 0%, rgba(7, 9, 12, 0) 100%);
+      backdrop-filter: blur(8px);
+    }
+
+    .nav-logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-logo-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--teal-primary);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--teal-primary);
+    }
+
+    .nav-cta {
+      background: rgba(29, 233, 182, 0.12);
+      border: 1px solid rgba(29, 233, 182, 0.35);
+      color: var(--teal-primary);
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .nav-cta:hover {
+      background: var(--teal-primary);
+      color: #07090c;
+      box-shadow: 0 0 24px var(--teal-glow);
+    }
+
+    /* CANVAS VIEWPORT PIN */
+    .viewport-pin {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .vignette-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(7, 9, 12, 0) 30%, rgba(7, 9, 12, 0.75) 100%),
+                  linear-gradient(180deg, rgba(7, 9, 12, 0.6) 0%, transparent 15%, transparent 85%, rgba(7, 9, 12, 0.8) 100%);
+      pointer-events: none;
+    }
+
+    /* SCROLL TRACK & SECTIONS */
+    .scroll-track {
+      position: relative;
+      height: 480vh;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .section-stage {
+      position: fixed;
+      inset: 0;
+      padding: 0 8vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .section-stage.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* TYPOGRAPHY & BADGES */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 30px;
+      background: rgba(29, 233, 182, 0.08);
+      border: 1px solid rgba(29, 233, 182, 0.3);
+      color: var(--teal-primary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      width: fit-content;
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4.8rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      margin-bottom: 1.25rem;
+      max-width: 750px;
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, #ffffff 40%, var(--teal-primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .section-desc {
+      font-size: clamp(1rem, 1.4vw, 1.25rem);
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 540px;
+      font-weight: 400;
+      margin-bottom: 2rem;
+    }
+
+    /* STATS STRIP */
+    .stats-strip {
+      display: flex;
+      gap: 36px;
+      margin-top: 10px;
+    }
+
+    .stat-item h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stat-item p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* GLASS CARDS */
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px 28px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      max-width: 420px;
+      position: relative;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 15%;
+      right: 15%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(29, 233, 182, 0.5), transparent);
+    }
+
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-body {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* POSITION MODIFIERS */
+    .align-right {
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .align-right .glass-card {
+      text-align: left;
+    }
+
+    .align-center {
+      align-items: center;
+      text-align: center;
+    }
+
+    /* PROGRESS TIMELINE ON RIGHT EDGE */
+    .timeline-tracker {
+      position: fixed;
+      right: 28px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .timeline-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .timeline-dot.active {
+      background: var(--teal-primary);
+      transform: scale(1.6);
+      box-shadow: 0 0 10px var(--teal-primary);
+    }
+
+    /* CTA BUTTONS */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--teal-primary);
+      color: #07090c;
+      padding: 16px 36px;
+      border-radius: 40px;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 28px var(--teal-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px rgba(29, 233, 182, 0.6);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 16px 28px;
+      border-radius: 40px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      margin-left: 12px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* NAV PAY BUTTON */
+    .nav-pay-btn {
+      background: linear-gradient(135deg, rgba(29, 233, 182, 0.2) 0%, rgba(14, 165, 233, 0.2) 100%);
+      border: 1px solid var(--teal-primary);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .nav-pay-btn:hover {
+      background: var(--teal-primary);
+      color: #07090c;
+      box-shadow: 0 0 20px var(--teal-glow);
+      transform: translateY(-1px);
+    }
+
+    /* CHECKOUT MODAL SYSTEM */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 7, 12, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-panel {
+      background: #0d121a;
+      border: 1px solid rgba(29, 233, 182, 0.25);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 580px;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(29, 233, 182, 0.15);
+      padding: 28px;
+      position: relative;
+      transform: scale(0.95) translateY(12px);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-backdrop.open .modal-panel {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: rotate(90deg);
+    }
+
+    .modal-header-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .modal-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .product-summary-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 14px 18px;
+      margin: 16px 0 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .product-summary-price {
+      text-align: right;
+    }
+
+    .price-usdc {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--teal-primary);
+    }
+
+    .price-pen {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* TABS */
+    .pay-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 6px;
+      border-radius: 14px;
+      margin-bottom: 22px;
+    }
+
+    .pay-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+      font-family: inherit;
+    }
+
+    .pay-tab-btn.active {
+      background: rgba(29, 233, 182, 0.15);
+      color: #fff;
+      border: 1px solid rgba(29, 233, 182, 0.4);
+      box-shadow: 0 4px 12px rgba(29, 233, 182, 0.15);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeInTab 0.3s ease;
+    }
+
+    @keyframes fadeInTab {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* CRYPTO TAB CONTENT */
+    .crypto-network-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 82, 255, 0.15);
+      border: 1px solid rgba(0, 82, 255, 0.4);
+      color: #60a5fa;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .pool-address-container {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px dashed rgba(29, 233, 182, 0.35);
+      border-radius: 14px;
+      padding: 14px;
+      margin: 14px 0;
+      position: relative;
+    }
+
+    .pool-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--teal-primary);
+      margin-bottom: 6px;
+      display: block;
+      font-weight: 600;
+    }
+
+    .pool-code {
+      font-family: monospace;
+      font-size: 0.88rem;
+      color: #e2e8f0;
+      word-break: break-all;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 8px 10px;
+      border-radius: 8px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .btn-copy {
+      background: rgba(29, 233, 182, 0.12);
+      border: 1px solid rgba(29, 233, 182, 0.3);
+      color: var(--teal-primary);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-copy:hover {
+      background: var(--teal-primary);
+      color: #07090c;
+    }
+
+    .crypto-qr-wrap {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 14px;
+      margin: 14px 0;
+    }
+
+    .crypto-qr-img {
+      width: 110px;
+      height: 110px;
+      border-radius: 10px;
+      background: #fff;
+      padding: 6px;
+      flex-shrink: 0;
+    }
+
+    .btn-web3 {
+      width: 100%;
+      background: linear-gradient(135deg, #0052ff 0%, #1de9b6 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.98rem;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 24px rgba(0, 82, 255, 0.35);
+      margin-top: 10px;
+      font-family: inherit;
+    }
+
+    .btn-web3:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(29, 233, 182, 0.45);
+    }
+
+    /* CARD TAB FORM */
+    .form-group {
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: #fff;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      border-color: var(--teal-primary);
+      box-shadow: 0 0 10px rgba(29, 233, 182, 0.2);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card-badges {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .card-badge-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+
+    .btn-pay-fiat {
+      width: 100%;
+      background: var(--teal-primary);
+      color: #07090c;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 24px var(--teal-glow);
+      margin-top: 10px;
+      font-family: inherit;
+    }
+
+    .btn-pay-fiat:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(29, 233, 182, 0.6);
+    }
+
+    .peru-yape-box {
+      margin-top: 14px;
+      background: rgba(116, 39, 149, 0.12);
+      border: 1px solid rgba(116, 39, 149, 0.35);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* SCROLL HINT */
+    .scroll-hint {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .scroll-hint-line {
+      width: 1px;
+      height: 24px;
+      background: linear-gradient(180deg, var(--teal-primary) 0%, transparent 100%);
+      animation: pulseScroll 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulseScroll {
+      0%, 100% { transform: scaleY(0.4); opacity: 0.3; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+
+    /* BOTÓN FLOTANTE WHATSAPP */
+    .whatsapp-float {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 120;
+      background: #25d366;
+      color: #ffffff;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      text-decoration: none;
+    }
+
+    .whatsapp-float:hover {
+      transform: scale(1.08) translateY(-3px);
+      box-shadow: 0 14px 32px rgba(37, 211, 102, 0.65);
+      color: #ffffff;
+    }
+
+    .whatsapp-float svg {
+      width: 32px;
+      height: 32px;
+      fill: #ffffff;
+    }
+
+    @media (max-width: 600px) {
+      .whatsapp-float {
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+      }
+      .whatsapp-float svg {
+        width: 28px;
+        height: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader">
+    <div class="loader-spinner"></div>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav>
+    <div class="nav-logo">
+      <div class="nav-logo-dot"></div>
+      OZONO LABS <span style="color:var(--text-muted); font-size:0.9rem; font-weight:400;">/ HS-Y01</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <button id="btn-nav-pay" class="nav-pay-btn" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+          <line x1="1" y1="10" x2="23" y2="10"></line>
+        </svg>
+        Pagar Cripto / Tarjeta
+      </button>
+      <a href="https://wa.me/51923541297?text=Hola%2C%20deseo%20solicitar%20una%20cotizaci%C3%B3n%20del%20generador%20de%20ozono%20HS-Y01." target="_blank" rel="noopener noreferrer" class="nav-cta">Solicitar Cotización</a>
+    </div>
+  </nav>
+
+  <!-- BACKGROUND PINNED CANVAS -->
+  <div class="viewport-pin">
+    <canvas id="hero-canvas"></canvas>
+    <div class="vignette-overlay"></div>
+  </div>
+
+  <!-- TIMELINE INDICATORS -->
+  <div class="timeline-tracker">
+    <div class="timeline-dot active" data-step="0"></div>
+    <div class="timeline-dot" data-step="1"></div>
+    <div class="timeline-dot" data-step="2"></div>
+    <div class="timeline-dot" data-step="3"></div>
+  </div>
+
+  <!-- SCROLL HINT -->
+  <div class="scroll-hint" id="scroll-hint">
+    <span>Desplaza para explorar</span>
+    <div class="scroll-hint-line"></div>
+  </div>
+
+  <!-- SCROLL TRACK (480vh virtual scroll height) -->
+  <div class="scroll-track"></div>
+
+  <!-- FASE 1: 0% - 22% SCROLL -->
+  <section class="section-stage active" id="stage-0">
+    <span class="badge">Esterilización Grado Industrial</span>
+    <h1 class="hero-title">HS-Y01 <span>Dual Power</span></h1>
+    <p class="section-desc">
+      El estándar definitivo en purificación molecular. Tecnología dual de ozono gaseoso de alta potencia y cánula de ozonización de agua.
+    </p>
+    <div class="stats-strip">
+      <div class="stat-item">
+        <h3>36,000<span style="font-size:1.1rem; color:var(--teal-primary);">mg/h</span></h3>
+        <p>Capacidad O3</p>
+      </div>
+      <div class="stat-item">
+        <h3>99.9<span style="font-size:1.1rem; color:var(--teal-primary);">%</span></h3>
+        <p>Esterilización</p>
+      </div>
+      <div class="stat-item">
+        <h3>Dual<span style="font-size:1.1rem; color:var(--teal-primary);">+</span></h3>
+        <p>Aire + Agua + Iones</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FASE 2: 25% - 48% SCROLL (EXPLOSIÓN / DESPIECE) -->
+  <section class="section-stage align-right" id="stage-1">
+    <span class="badge">Ingeniería Interna 3D</span>
+    <h1 class="hero-title">Descarga Corona <span>en Cuarzo</span></h1>
+    <p class="section-desc">
+      A diferencia de las placas cerámicas convencionales que pierden rendimiento por humedad, nuestro módulo de tubos de cuarzo garantiza estabilidad y máxima pureza de gas.
+    </p>
+    <div class="glass-card">
+      <div class="card-title">
+        <span>Módulo de Cuarzo Blindado</span>
+        <span style="color:var(--teal-primary); font-size: 0.85rem;">GEN 4</span>
+      </div>
+      <div class="card-body">
+        Estructura modular de tubos disipadores con aisladores de alto voltaje que evitan sobrecalentamientos en jornadas continuas.
+      </div>
+    </div>
+  </section>
+
+  <!-- FASE 3: 52% - 75% SCROLL (MÓDULO ANIONES & AGUA) -->
+  <section class="section-stage" id="stage-2">
+    <span class="badge">Purificación Dual de Fluidos</span>
+    <h1 class="hero-title">Aire Puro & <span>Agua Ozonizada</span></h1>
+    <p class="section-desc">
+      Inyecta ozono directamente en agua para desinfectar alimentos, vegetales y utensilios sin dejar químicos residuales, mientras el generador de aniones precipita micropartículas y alérgenos en el aire.
+    </p>
+    <div class="glass-card">
+      <div class="card-title">
+        <span>Cánula Acero Inox + C-Timer</span>
+        <span style="color:var(--teal-primary); font-size:0.85rem;">0-120 MIN</span>
+      </div>
+      <div class="card-body">
+        Control independiente por perilla analógica para dosificación precisa de burbujas en recipientes de líquidos y alimentos.
+      </div>
+    </div>
+  </section>
+
+  <!-- FASE 4: 78% - 100% SCROLL (REENSAMBLAJE & CTA) -->
+  <section class="section-stage align-center" id="stage-3">
+    <span class="badge">Protección Total Certificada</span>
+    <h1 class="hero-title" style="max-width:850px;">El aire más limpio. <span>Sin concesiones.</span></h1>
+    <p class="section-desc" style="max-width:600px; margin-left:auto; margin-right:auto;">
+      Ideal para habitaciones de hotel, clínicas, desinfección de vehículos, cocinas profesionales y hogares con mascotas.
+    </p>
+    <div style="display:flex; align-items:center; justify-content:center; gap:14px; margin-top:14px; flex-wrap:wrap;">
+      <button id="btn-hero-pay" class="btn-primary" type="button" style="cursor:pointer; border:none;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path>
+          <path d="M12 6v2m0 8v2"></path>
+        </svg>
+        Pagar con USDC / Tarjeta
+      </button>
+      <a href="https://wa.me/51923541297?text=Hola%2C%20deseo%20solicitar%20una%20cotizaci%C3%B3n%20del%20generador%20de%20ozono%20HS-Y01." target="_blank" rel="noopener noreferrer" class="btn-secondary" style="border-color: rgba(37, 211, 102, 0.4); color: #25d366;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.699c.971.53 1.95.811 2.796.812 3.183 0 5.768-2.587 5.769-5.767.001-3.181-2.584-5.767-5.769-5.767zm7.502 5.766c-.001 4.144-3.374 7.516-7.502 7.516-1.32 0-2.553-.346-3.628-.952l-4.028 1.056 1.075-3.929c-.694-1.127-1.066-2.434-1.066-3.691.002-4.143 3.375-7.516 7.504-7.516 4.143.001 7.516 3.374 7.516 7.516zm-3.353 3.033c-.183-.092-1.082-.534-1.25-.595-.168-.061-.29-.092-.413.092-.122.183-.474.595-.581.718-.107.122-.214.137-.397.046-.183-.092-.772-.285-1.471-.908-.544-.485-.911-1.085-1.018-1.268-.107-.183-.011-.282.08-.373.082-.082.183-.214.275-.32.091-.107.122-.183.183-.306.061-.122.031-.229-.015-.32-.046-.092-.413-.993-.565-1.36-.149-.358-.3-.31-.413-.315l-.352-.006c-.122 0-.32.046-.488.229-.168.183-.642.627-.642 1.529 0 .902.657 1.773.749 1.895.092.122 1.292 1.972 3.13 2.764.437.189.779.301 1.045.386.439.14.839.12 1.155.073.353-.053 1.082-.442 1.235-.869.153-.427.153-.793.107-.869-.046-.076-.168-.122-.351-.214z"/>
+        </svg>
+        Cotizar por WhatsApp
+      </a>
+      <a href="./9a32cef581736f905c750a620d6b363.png" target="_blank" class="btn-secondary">Ver Ficha Técnica</a>
+    </div>
+  </section>
+
+  <!-- BOTÓN FLOTANTE DE WHATSAPP -->
+  <a href="https://wa.me/51923541297?text=Hola%2C%20deseo%20solicitar%20una%20cotizaci%C3%B3n%20del%20generador%20de%20ozono%20HS-Y01." 
+     target="_blank" 
+     rel="noopener noreferrer" 
+     class="whatsapp-float" 
+     title="Cotizar por WhatsApp">
+    <svg viewBox="0 0 24 24">
+      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.699c.971.53 1.95.811 2.796.812 3.183 0 5.768-2.587 5.769-5.767.001-3.181-2.584-5.767-5.769-5.767zm7.502 5.766c-.001 4.144-3.374 7.516-7.502 7.516-1.32 0-2.553-.346-3.628-.952l-4.028 1.056 1.075-3.929c-.694-1.127-1.066-2.434-1.066-3.691.002-4.143 3.375-7.516 7.504-7.516 4.143.001 7.516 3.374 7.516 7.516zm-3.353 3.033c-.183-.092-1.082-.534-1.25-.595-.168-.061-.29-.092-.413.092-.122.183-.474.595-.581.718-.107.122-.214.137-.397.046-.183-.092-.772-.285-1.471-.908-.544-.485-.911-1.085-1.018-1.268-.107-.183-.011-.282.08-.373.082-.082.183-.214.275-.32.091-.107.122-.183.183-.306.061-.122.031-.229-.015-.32-.046-.092-.413-.993-.565-1.36-.149-.358-.3-.31-.413-.315l-.352-.006c-.122 0-.32.046-.488.229-.168.183-.642.627-.642 1.529 0 .902.657 1.773.749 1.895.092.122 1.292 1.972 3.13 2.764.437.189.779.301 1.045.386.439.14.839.12 1.155.073.353-.053 1.082-.442 1.235-.869.153-.427.153-.793.107-.869-.046-.076-.168-.122-.351-.214z"/>
+    </svg>
+  </a>
+
+  <!-- CHECKOUT MODAL (CRIPTO USDC BASE + TARJETAS PERU) -->
+  <div id="checkout-modal" class="modal-backdrop">
+    <div class="modal-panel">
+      <button class="modal-close" id="btn-close-modal" aria-label="Cerrar modal">&times;</button>
+      
+      <div class="modal-header-top">
+        <span class="badge" style="margin-bottom:0; font-size:0.75rem;">Checkout Seguro SSL</span>
+      </div>
+      <h2 class="modal-title">Adquirir Purificador HS-Y01</h2>
+      
+      <div class="product-summary-box">
+        <div>
+          <div style="font-weight:700; color:#fff; font-size:0.95rem;">Generador de Ozono HS-Y01</div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">Incluye cánula de agua, generador de aniones y envío</div>
+        </div>
+        <div class="product-summary-price">
+          <div class="price-usdc">380 USDC</div>
+          <div class="price-pen">≈ S/ 1,420.00 PEN</div>
+        </div>
+      </div>
+
+      <!-- PESTAÑAS -->
+      <div class="pay-tabs">
+        <button class="pay-tab-btn active" id="tab-btn-crypto" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path>
+            <path d="M12 6v2m0 8v2"></path>
+          </svg>
+          Cripto (USDC Arbitrum)
+        </button>
+        <button class="pay-tab-btn" id="tab-btn-cards" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
+          Tarjetas Perú & Yape
+        </button>
+      </div>
+
+      <!-- CONTENIDO PESTAÑA 1: CRIPTO -->
+      <div class="tab-content active" id="content-crypto">
+        <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+          <button id="net-btn-arb" type="button" style="background:#28a0f0; color:#fff; border:1px solid #28a0f0; border-radius:20px; padding:5px 14px; font-size:0.8rem; font-weight:700; cursor:pointer; font-family:inherit;">
+            ● Red Arbitrum (ARB)
+          </button>
+          <button id="net-btn-base" type="button" style="background:rgba(255,255,255,0.06); color:var(--text-muted); border:1px solid rgba(255,255,255,0.15); border-radius:20px; padding:5px 14px; font-size:0.8rem; font-weight:600; cursor:pointer; font-family:inherit;">
+            ○ Red Base
+          </button>
+        </div>
+
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">
+          Transfiere con tu wallet a la dirección del Liquidity Pool:
+        </p>
+
+        <div class="pool-address-container">
+          <span class="pool-label" id="pool-network-label">Dirección Liquidity Pool / Smart Vault (Arbitrum One):</span>
+          <code class="pool-code" id="pool-address-text">0xf6Bb92Ac612D814F2A1e67Bf713F2f732419AC87</code>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <button class="btn-copy" id="btn-copy-address" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="copy-text">Copiar Dirección</span>
+            </button>
+            <span style="font-size:0.75rem; color:#38bdf8;" id="pool-token-label">Token: USDC (Arbitrum One)</span>
+          </div>
+        </div>
+
+        <div class="crypto-qr-wrap">
+          <img class="crypto-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=ethereum:0xf6Bb92Ac612D814F2A1e67Bf713F2f732419AC87" alt="QR Pool USDC ARB" id="crypto-qr-img" />
+          <div style="font-size:0.82rem; color:var(--text-muted); line-height:1.5;">
+            <strong style="color:#fff;">Escanea con tu Wallet móvil:</strong><br>
+            Compatible con MetaMask, Trust Wallet, Rabby, Coinbase y Phantom.<br>
+            <span style="font-size:0.75rem; color:var(--teal-primary);">Cobro de prueba calibrado a 0.01 USDC.</span>
+          </div>
+        </div>
+
+        <button class="btn-web3" id="btn-connect-wallet" type="button" style="background: linear-gradient(135deg, #12aaee 0%, #1de9b6 100%);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+            <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+            <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+          </svg>
+          Pagar 1420 Total con USDC (Arbitrum)
+        </button>
+
+        <a id="btn-crypto-notify-wa" href="https://wa.me/51923541297?text=Hola%2C%20acabo%20de%20realizar%20el%20pago%20en%20Arbitrum%20(USDC)%20a%20la%20pool%200xf6Bb92Ac612D814F2A1e67Bf713F2f732419AC87.%20Env%C3%ADo%20mi%20hash%20de%20confirmaci%C3%B3n%3A" target="_blank" rel="noopener noreferrer" style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; font-size:0.85rem; color:#25d366; text-decoration:none; padding:8px;">
+          <span>¿Ya enviaste los USDC? Notificar comprobante por WhatsApp</span> &rarr;
+        </a>
+      </div>
+
+      <!-- CONTENIDO PESTAÑA 2: TARJETAS PERÚ & YAPE (MERCADO PAGO OFICIAL) -->
+      <div class="tab-content" id="content-cards">
+        <div class="card-badges">
+          <span class="card-badge-pill">VISA</span>
+          <span class="card-badge-pill">MASTERCARD</span>
+          <span class="card-badge-pill">AMEX</span>
+          <span class="card-badge-pill">DINERS</span>
+          <span class="card-badge-pill" style="color:#22c55e;">DÉBITO / CRÉDITO</span>
+        </div>
+
+        <div style="background: rgba(0, 158, 227, 0.08); border: 1px solid rgba(0, 158, 227, 0.35); border-radius: 14px; padding: 18px; margin-bottom: 16px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
+            <div style="font-weight:700; color:#fff; font-size:1rem; display:flex; align-items:center; gap:8px;">
+              <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#009ee3;"></span>
+              Mercado Pago Perú
+            </div>
+            <span style="font-size:0.75rem; background:rgba(0,158,227,0.2); color:#38bdf8; padding:3px 8px; border-radius:12px; font-weight:600;">OFICIAL & SEGURO</span>
+          </div>
+          <p style="font-size:0.84rem; color:var(--text-muted); line-height:1.55; margin-bottom:14px;">
+            Paga en moneda nacional (PEN) con cualquier tarjeta de crédito o débito emitida en Perú (BCP, BBVA, Interbank, Scotiabank), en cuotas o con dinero en cuenta.
+          </p>
+
+          <a href="https://link.mercadopago.com.pe/hsy01" target="_blank" rel="noopener noreferrer" class="btn-pay-fiat" style="text-decoration:none; background:#009ee3; box-shadow:0 10px 24px rgba(0, 158, 227, 0.4);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Pagar S/ 1,420.00 con Mercado Pago &rarr;
+          </a>
+        </div>
+
+        <div class="peru-yape-box">
+          <div>
+            <div style="font-size:0.85rem; font-weight:700; color:#c084fc;">¿Prefieres Yape o Plin directo?</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Transferencia inmediata al número oficial: <strong>923 541 297</strong></div>
+          </div>
+          <a href="https://wa.me/51923541297?text=Hola%2C%20deseo%20pagar%20el%20HS-Y01%20(S%2F%201420)%20mediante%20Yape%20%2F%20Plin." target="_blank" rel="noopener noreferrer" style="background:#742795; color:#fff; font-size:0.78rem; font-weight:700; padding:8px 14px; border-radius:8px; text-decoration:none; white-space:nowrap;">
+            Pagar con Yape
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('hero-canvas');
+    const ctx = canvas.getContext('2d');
+    const frameCount = 124;
+    const currentFrame = i => `./frames/frame_${i.toString().padStart(4, '0')}.webp`;
+
+    const images = [];
+    const state = {
+      frame: 1,
+      targetFrame: 1
+    };
+
+    let loadedCount = 0;
+    const loaderElem = document.getElementById('loader');
+    const scrollHintElem = document.getElementById('scroll-hint');
+
+    // Pre-cargar todos los fotogramas WebP
+    for (let i = 1; i <= frameCount; i++) {
+      const img = new Image();
+      img.src = currentFrame(i);
+      img.onload = () => {
+        loadedCount++;
+
+        if (loadedCount === frameCount) {
+          setTimeout(() => {
+            loaderElem.classList.add('hidden');
+            resizeCanvas();
+            render();
+          }, 300);
+        }
+      };
+      images.push(img);
+    }
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.scale(dpr, dpr);
+      render();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function render() {
+      const idx = Math.min(frameCount - 1, Math.max(0, Math.floor(state.frame) - 1));
+      const img = images[idx];
+      if (!img || !img.complete) return;
+
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const hRatio = w / img.width;
+      const vRatio = h / img.height;
+      const ratio = Math.max(hRatio, vRatio);
+      const centerShiftX = (w - img.width * ratio) / 2;
+      const centerShiftY = (h - img.height * ratio) / 2;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, img.width, img.height,
+                         centerShiftX, centerShiftY, img.width * ratio, img.height * ratio);
+    }
+
+    // Interpolación suave tipo Apple / Dyad Finance
+    function updateAnimation() {
+      const diff = state.targetFrame - state.frame;
+      if (Math.abs(diff) > 0.01) {
+        state.frame += diff * 0.12; // Coeficiente de suavizado
+        render();
+      }
+      requestAnimationFrame(updateAnimation);
+    }
+    requestAnimationFrame(updateAnimation);
+
+    // Etapas y sus rangos de scroll (0 a 1)
+    const stages = [
+      { id: 'stage-0', start: 0.00, end: 0.22 },
+      { id: 'stage-1', start: 0.25, end: 0.48 },
+      { id: 'stage-2', start: 0.52, end: 0.75 },
+      { id: 'stage-3', start: 0.78, end: 1.00 }
+    ];
+
+    const dots = document.querySelectorAll('.timeline-dot');
+
+    window.addEventListener('scroll', () => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (maxScroll <= 0) return;
+      const progress = Math.max(0, Math.min(1, window.scrollY / maxScroll));
+
+      // Sincronizar fotograma
+      state.targetFrame = 1 + progress * (frameCount - 1);
+
+      // Ocultar hint de scroll
+      if (window.scrollY > 80) {
+        scrollHintElem.style.opacity = '0';
+      } else {
+        scrollHintElem.style.opacity = '1';
+      }
+
+      // Activar / desactivar secciones con fade
+      stages.forEach((st, idx) => {
+        const el = document.getElementById(st.id);
+        const isActive = progress >= st.start && progress <= st.end;
+        if (isActive) {
+          el.classList.add('active');
+          dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        } else {
+          el.classList.remove('active');
+        }
+      });
+    }, { passive: true });
+
+    // Clicks en los puntos de la línea de tiempo
+    dots.forEach((dot, idx) => {
+      dot.addEventListener('click', () => {
+        const targetProgress = (stages[idx].start + stages[idx].end) / 2;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        window.scrollTo({
+          top: targetProgress * maxScroll,
+          behavior: 'smooth'
+        });
+      });
+    });
+
+    // SISTEMA DE CHECKOUT (CRIPTO USDC BASE + TARJETAS PERÚ)
+    const modal = document.getElementById('checkout-modal');
+    const openModal = () => modal.classList.add('open');
+    const closeModal = () => modal.classList.remove('open');
+
+    document.getElementById('btn-nav-pay')?.addEventListener('click', openModal);
+    document.getElementById('btn-hero-pay')?.addEventListener('click', openModal);
+    document.getElementById('btn-close-modal')?.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // Cambio de pestañas
+    const tabCrypto = document.getElementById('tab-btn-crypto');
+    const tabCards = document.getElementById('tab-btn-cards');
+    const contentCrypto = document.getElementById('content-crypto');
+    const contentCards = document.getElementById('content-cards');
+
+    tabCrypto.addEventListener('click', () => {
+      tabCrypto.classList.add('active');
+      tabCards.classList.remove('active');
+      contentCrypto.classList.add('active');
+      contentCards.classList.remove('active');
+    });
+
+    tabCards.addEventListener('click', () => {
+      tabCards.classList.add('active');
+      tabCrypto.classList.remove('active');
+      contentCards.classList.add('active');
+      contentCrypto.classList.remove('active');
+    });
+
+    // Copiar dirección de Liquidity Pool / Smart Vault
+    const copyBtn = document.getElementById('btn-copy-address');
+    const copyText = document.getElementById('copy-text');
+    const poolAddrElem = document.getElementById('pool-address-text');
+
+    copyBtn.addEventListener('click', async () => {
+      const addr = poolAddrElem.innerText.trim();
+      try {
+        await navigator.clipboard.writeText(addr);
+        copyText.innerText = '¡Dirección Copiada!';
+        setTimeout(() => copyText.innerText = 'Copiar Dirección', 2500);
+      } catch (err) {
+        copyText.innerText = 'Presiona Ctrl+C para copiar';
+      }
+    });
+
+    // SELECTOR DE RED CRIPTO (ARBITRUM VS BASE)
+    let currentCryptoNetwork = 'arb';
+    const btnNetArb = document.getElementById('net-btn-arb');
+    const btnNetBase = document.getElementById('net-btn-base');
+    const poolNetLabel = document.getElementById('pool-network-label');
+    const poolTokenLabel = document.getElementById('pool-token-label');
+
+    btnNetArb?.addEventListener('click', () => {
+      currentCryptoNetwork = 'arb';
+      btnNetArb.style.background = '#28a0f0';
+      btnNetArb.style.color = '#fff';
+      btnNetArb.style.borderColor = '#28a0f0';
+      btnNetArb.innerText = '● Red Arbitrum (ARB)';
+
+      btnNetBase.style.background = 'rgba(255,255,255,0.06)';
+      btnNetBase.style.color = 'var(--text-muted)';
+      btnNetBase.style.borderColor = 'rgba(255,255,255,0.15)';
+      btnNetBase.innerText = '○ Red Base';
+
+      poolNetLabel.innerText = 'Dirección Liquidity Pool / Smart Vault (Arbitrum One):';
+      poolTokenLabel.innerText = 'Token: USDC (Arbitrum One)';
+      btnWeb3.innerText = 'Pagar 1420 Total con USDC (Arbitrum)';
+    });
+
+    btnNetBase?.addEventListener('click', () => {
+      currentCryptoNetwork = 'base';
+      btnNetBase.style.background = '#0052ff';
+      btnNetBase.style.color = '#fff';
+      btnNetBase.style.borderColor = '#0052ff';
+      btnNetBase.innerText = '● Red Base';
+
+      btnNetArb.style.background = 'rgba(255,255,255,0.06)';
+      btnNetArb.style.color = 'var(--text-muted)';
+      btnNetArb.style.borderColor = 'rgba(255,255,255,0.15)';
+      btnNetArb.innerText = '○ Red Arbitrum (ARB)';
+
+      poolNetLabel.innerText = 'Dirección Liquidity Pool / Smart Vault (Base Network):';
+      poolTokenLabel.innerText = 'Token: USDC (Base Network)';
+      btnWeb3.innerText = 'Pagar 1420 Total con USDC (Base)';
+    });
+
+    // Pagar en USDC (Visual: 1420 Total | Cobro Real de Prueba: Tarifa Mínima 0.01 USDC)
+    const btnWeb3 = document.getElementById('btn-connect-wallet');
+    btnWeb3.addEventListener('click', async () => {
+      if (typeof window.ethereum === 'undefined') {
+        alert('No se detectó wallet Web3 instalada en este navegador. Abre la página en MetaMask/Coinbase Wallet o escanea el QR.');
+        return;
+      }
+
+      btnWeb3.disabled = true;
+      btnWeb3.innerText = 'Conectando Wallet...';
+
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const userAccount = accounts[0];
+
+        const isArb = currentCryptoNetwork === 'arb';
+        const targetChainId = isArb ? '0xa4b1' : '0x2105';
+        const targetUsdcContract = isArb 
+          ? '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' // Arbitrum native USDC
+          : '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'; // Base USDC
+
+        // Cambiar o agregar la red seleccionada
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: targetChainId }],
+          });
+        } catch (switchError) {
+          if (switchError.code === 4902) {
+            const chainParams = isArb ? {
+              chainId: '0xa4b1',
+              chainName: 'Arbitrum One',
+              nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+              rpcUrls: ['https://arb1.arbitrum.io/rpc'],
+              blockExplorerUrls: ['https://arbiscan.io']
+            } : {
+              chainId: '0x2105',
+              chainName: 'Base',
+              nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+              rpcUrls: ['https://mainnet.base.org'],
+              blockExplorerUrls: ['https://basescan.org']
+            };
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [chainParams]
+            });
+          } else {
+            throw switchError;
+          }
+        }
+
+        btnWeb3.innerText = 'Confirmando en Wallet...';
+
+        const targetVault = poolAddrElem.innerText.trim().toLowerCase().replace('0x', '').padStart(64, '0');
+
+        // Tarifa mínima de prueba: 0.01 USDC (10,000 unidades en 6 decimales = 0x2710 en hex)
+        const amountHex = (10000).toString(16).padStart(64, '0');
+        const transferData = '0xa9059cbb' + targetVault + amountHex;
+
+        const txHash = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: userAccount,
+            to: targetUsdcContract,
+            data: transferData
+          }]
+        });
+
+        const explorerUrl = isArb ? `https://arbiscan.io/tx/${txHash}` : `https://basescan.org/tx/${txHash}`;
+        btnWeb3.innerText = '¡Pago Enviado a la Blockchain!';
+        btnWeb3.style.background = '#22c55e';
+
+        const waMsg = encodeURIComponent(`Hola, acabo de confirmar el pago de prueba para el Generador HS-Y01.\nRed: ${isArb ? 'Arbitrum' : 'Base'}\nPool: 0xf6Bb92Ac612D814F2A1e67Bf713F2f732419AC87\nVer Tx: ${explorerUrl}`);
+        window.open(`https://wa.me/51923541297?text=${waMsg}`, '_blank');
+      } catch (err) {
+        console.error(err);
+        alert('Transacción cancelada o error: ' + (err.message || 'Error al procesar con Web3'));
+        btnWeb3.innerText = `Pagar 1420 Total con USDC (${currentCryptoNetwork === 'arb' ? 'Arbitrum' : 'Base'})`;
+      } finally {
+        btnWeb3.disabled = false;
+      }
+    });
+
+    // Notificar cierre o apertura de modal en consola si es necesario
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+    });
+  </script>
+</body>
+</html>
